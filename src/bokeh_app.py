@@ -5,7 +5,7 @@ from functools import partial
 from threading import Thread
 from tornado import gen
 
-from time import time
+import time
 from bokeh.layouts import column, row
 from bokeh.models import ColumnDataSource, Button
 from bokeh.plotting import figure, curdoc
@@ -35,11 +35,20 @@ def on_response(msg):
 
 @gen.coroutine
 def update(msg):
-    if msg['type']=='BBO':
-        # [data[k].append(v) for (k, v) in msg.items()]
-        # [data[k].append(v) for (k, v) in msg.items()]
-        print(msg)
-        ds.stream({k: [v] for (k, v) in msg.items()})
+    # if msg['type']=='BBO':
+    #     # [data[k].append(v) for (k, v) in msg.items()]
+    #     # [data[k].append(v) for (k, v) in msg.items()]
+    #     print(msg)
+    #     # ds.stream({k: [v] for (k, v) in msg.items()})
+    # ds.stream(msg, rollover=1)
+    print(msg)
+    data_table.source.data = {k: [v] for (k, v) in msg.items()}
+
+def periodic_callback():
+    dummy = {'time': 1489848786328, 'type': 'BBO', 'symbol': 'AAPL', 'bid': '136.3300', 'ask': str(time.time())}
+    dummy = {k: [v] for (k, v) in dummy.items()}
+    data_table.source.data = dummy
+
 
 # Fetch some data
 baseurl = "http://emsapi.eu-west-2.elasticbeanstalk.com"
@@ -53,7 +62,14 @@ def blocking_ws():
     print('SOCKET STARTED')
     print(socketIO)
     socketIO.wait()
-    print('============================loooop')
+    # print('============================loooop')
+    #
+    # while True:
+    #     time.sleep(0.5)
+    #     dummy = {'time': 1489848786328, 'type': 'BBO', 'symbol': 'AAPL', 'bid': '136.3300', 'ask': str(time.time())}
+    #     dummy = {k: [v] for (k, v) in dummy.items()}
+    #     print(dummy)
+    #     doc.add_next_tick_callback(partial(update, dummy))
 
 
 # Stock plots
@@ -61,8 +77,8 @@ p1 = figure(x_axis_type="datetime", title="AAPL")
 p1.grid.grid_line_alpha=0.3
 p1.xaxis.axis_label = 'Date'
 p1.yaxis.axis_label = 'Price'
-p1.line(ds['time'], ds['bid'], legend='bid')
-p1.line(ds['time'], ds['ask'], legend='ask')
+# p1.line(ds['time'], ds['bid'], legend='bid')
+# p1.line(ds['time'], ds['ask'], legend='ask')
 # #
 # p1.line(datetime(AAPL['date']), AAPL['adj_close'], color='#A6CEE3', legend='AAPL')
 # p1.line(datetime(GOOG['date']), GOOG['adj_close'], color='#B2DF8A', legend='GOOG')
@@ -74,8 +90,8 @@ p1.legend.location = "top_left"
 
 
 # put the button and plot in a layout and add to the document
-doc.add_root(column(data_table, p1))
-
+doc.add_root(column(data_table))
+# doc.add_periodic_callback(periodic_callback, 1000)
 
 ws_thread = Thread(target=blocking_ws)
 ws_thread.start()
