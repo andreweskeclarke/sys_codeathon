@@ -30,5 +30,5 @@ baseurl = "http://emsapi.eu-west-2.elasticbeanstalk.com"
 with SocketIO(baseurl) as socketIO:
   socketIO.on('onMarketData', on_response)
   print('Subscribing...')
-  socketIO.emit('subscribe', ['AAPL','AMD','BAC', 'BMY', 'C', 'CSCO', 'CYH', 'FB', 'FCX', 'GE', 'INTC', 'MDLZ', 'MSFT', 'WMT', 'MU', 'INTC', 'PFE', 'VZ', 'WFZ', 'WMT', 'XOM'])
+  socketIO.emit('subscribe', ['AAPL','AMD','BAC', 'BMY', 'C', 'CSCO', 'CYH', 'FB', 'FCX', 'GE', 'INTC', 'MDLZ', 'MSFT', 'WMT', 'MU', 'INTC', 'PFE', 'VZ', 'WFX', 'WMT', 'XOM'])
   socketIO.wait()
