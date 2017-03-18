@@ -17,6 +17,9 @@ from socketIO_client import SocketIO
 import pandas as pd
 import uuid
 
+from sklearn.externals import joblib
+from sklearn.linear_model import *
+
 
 data = defaultdict(list)
 
@@ -50,10 +53,14 @@ def periodic_callback():
     data_table.source.data = dummy
 
 
+def on_order_message(msg):
+    print(msg)
+
 # Fetch some data
 baseurl = "http://emsapi.eu-west-2.elasticbeanstalk.com"
 socketIO = SocketIO(baseurl)
 socketIO.on('onMarketData', on_response)
+socketIO.on('onOrderMessagee', on_order_message)
 print('Subscribing...')
 socketIO.emit('subscribe', ['AAPL'])
 
@@ -89,9 +96,40 @@ p1.legend.location = "top_left"
 # Make tabs
 
 
-# put the button and plot in a layout and add to the document
-doc.add_root(column(data_table))
 # doc.add_periodic_callback(periodic_callback, 1000)
 
 ws_thread = Thread(target=blocking_ws)
 ws_thread.start()
+
+## ORDERING
+def button_sell():
+    newOrder = {'type': 'NewOrder',
+                'clientOrderId': str(uuid.uuid4()),
+                'symbol': 'AAPL',
+                'buySell': 'SELL',
+                'qty': '100'}
+    socketIO.emit('submitOrder', newOrder)
+    print(newOrder)
+
+## ORDERING
+def button_buy():
+    newOrder = {'type': 'NewOrder',
+                'clientOrderId': str(uuid.uuid4()),
+                'symbol': 'AAPL',
+                'buySell': 'BUY',
+                'qty': '100'}
+    socketIO.emit('submitOrder', newOrder)
+    print(newOrder)
+
+# add a button widget and configure with the call back
+sell_button = Button(label="Sell")
+sell_button.on_click(button_sell)
+buy_button = Button(label="Buy")
+buy_button.on_click(button_buy)
+
+# put the button and plot in a layout and add to the document
+doc.add_root(column(data_table, sell_button, buy_button))
+
+
+##
+# model = joblib.load()
