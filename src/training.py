@@ -24,9 +24,9 @@ def gen_features(records):
   for i in range(0, len(tradePrices)):
     price_improvement = False
     i_min = min(i+1, len(tradePrices))
-    i_max = min(i+6, len(tradePrices))
+    i_max = min(i+3, len(tradePrices))
     future_prices = tradePrices[i_min:i_max]
-    if (sum(future_prices)/5) > tradePrices[i]:
+    if len(future_prices) > 0 and (sum(future_prices)/len(future_prices)) > tradePrices[i]:
       price_improvement = True
     priceImproved.append(price_improvement)
   avg5Prices = list()
