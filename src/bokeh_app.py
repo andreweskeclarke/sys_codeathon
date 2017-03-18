@@ -21,6 +21,7 @@ from sklearn.externals import joblib
 from sklearn.linear_model import *
 
 
+lr_model = joblib.load('models/APPL_lr')
 data = defaultdict(list)
 
 dummy = {'time': 1489848786328, 'type': 'BBO', 'symbol': 'AAPL', 'bid': '136.3300', 'ask': '136.3700'}
@@ -45,6 +46,10 @@ def update(msg):
     #     # ds.stream({k: [v] for (k, v) in msg.items()})
     # ds.stream(msg, rollover=1)
     print(msg)
+    old_data = data_table.source.data
+    prevPrice = msg['bid']
+    avg5Price = (prevPrice/5) + 4*(old_data['bid']/5)
+    prediction = lr_model.predict(np.array([avg5Price, prevPrice]))
     data_table.source.data = {k: [v] for (k, v) in msg.items()}
 
 def periodic_callback():
