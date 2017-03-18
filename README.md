@@ -1,2 +1,2 @@
 # sys_codeathon
-Systeatica Codethon
+Systematica Codethon
