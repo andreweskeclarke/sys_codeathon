@@ -20,14 +20,24 @@ def gen_features(records):
   trades = sorted([r for r in records if r.key['type'] == 'TRADE'], key=lambda t: t.key['time'])
   times = [t.key['time'] for t in trades]
   tradePrices = [float(t.key['lastPrice']) for t in trades if t.key['type'] == 'TRADE']
-  priceImproved = [tradePrices[i] > tradePrices[i-1] for i in range(0,len(tradePrices))]
+  priceImproved = list()
+  for i in range(0, len(tradePrices)):
+    price_improvement = False
+    i_min = min(i+1, len(tradePrices))
+    i_max = min(i+6, len(tradePrices))
+    future_prices = tradePrices[i_min:i_max]
+    if (sum(future_prices)/5) > tradePrices[i]:
+      price_improvement = True
+    priceImproved.append(price_improvement)
   avg5Prices = list()
   prevPrices = list()
+  currentPrices = list()
   for i in range(5,len(tradePrices)):
     avg5Prices.append(sum(tradePrices[i-5:i])/5)
     prevPrices.append(tradePrices[i-1])
+    currentPrices.append(tradePrices[i])
   truncatedPriceImproved = priceImproved[5:]
-  features = np.array([avg5Prices,prevPrices]).T
+  features = np.array([avg5Prices,prevPrices,currentPrices]).T
   targets = np.array(truncatedPriceImproved)
   return features, targets
 
@@ -35,24 +45,23 @@ couchdb_server = couchdb.client.Server('http://localhost:5984/')
 cdb = couchdb_server['hackathon']
 
 symbols = ['AAPL','AMD','BAC', 'BMY', 'C', 'CSCO', 'CYH', 'FB', 'FCX', 'GE', 'INTC', 'MDLZ', 'MSFT', 'WMT', 'MU', 'INTC', 'PFE', 'VZ', 'WFZ', 'WMT', 'XOM']
-for symbol in ['WFZ']:
+for symbol in ['AAPL']:
   try:
     print('Loading data from couchdb for %s...' % symbol)
     current_time = time.time()*1e3
     recent_cutoff = current_time - 60*10*1e3
     old_cutoff = current_time - 60*15*1e3
-    records = sorted([x for x in cdb.query(''' function(doc) { if(doc.symbol == \'''' + symbol + '''\' && doc.time > ''' + str(int(old_cutoff)) + ''') emit(doc);} ''')], key=lambda t: t.key['time'])
-    test_records = [r for r in records if int(r.key['time']) < recent_cutoff]
-    train_records = [r for r in records if int(r.key['time']) > recent_cutoff]
-    if len(train_records) == 0 or len(test_records) == 0:
-      records = sorted([x for x in cdb.query(''' function(doc) { if(doc.symbol == \'''' + symbol + '''\') emit(doc);} ''')], key=lambda t: t.key['time'])
-      test_records = records[0:int(len(records)/3)]
-      train_records = records[int(len(records)/3):]
+    # records = sorted([x for x in cdb.query(''' function(doc) { if(doc.symbol == \'''' + symbol + '''\' && doc.time > ''' + str(int(old_cutoff)) + ''') emit(doc);} ''')], key=lambda t: t.key['time'])
+    # test_records = [r for r in records if int(r.key['time']) < recent_cutoff]
+    # train_records = [r for r in records if int(r.key['time']) > recent_cutoff]
+    records = sorted([x for x in cdb.query(''' function(doc) { if(doc.symbol == \'''' + symbol + '''\') emit(doc);} ''')], key=lambda t: t.key['time'])
+    test_records = records[0:int(len(records)/3)]
+    train_records = records[int(len(records)/3):]
 
     if len(train_records) == 0 or len(test_records) == 0:
       print('NO DATA!!!!!!!!!!')
 
-    print('Loaded %d training records and %d test records' % (len(records), len(test_records)))
+    print('Loaded %d training records and %d test records' % (len(train_records), len(test_records)))
     print('Generating features...')
     train_features, train_targets = gen_features(train_records)
     test_features, test_targets = gen_features(test_records)
